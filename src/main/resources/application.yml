@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: 微信聊天记录分析
+
+# 阿里云DashScope API配置
+dashscope:
+  api-key: ${DASHSCOPE_API_KEY:your-dashscope-api-key}
+  model: Moonshot-Kimi-K2-Instruct
+  url: https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation
+# 日志配置
+logging:
+  level:
+    com.emotest.emoAgent: DEBUG
+    org.springframework.ai: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/emoAgent.log 

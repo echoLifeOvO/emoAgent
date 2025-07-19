@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信聊天记录分析工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result.success {
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            color: #0c4a6e;
+        }
+
+        .result.error {
+            background: #fef2f2;
+            border: 2px solid #ef4444;
+            color: #7f1d1d;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .example {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .example h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .example p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .example code {
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💬 微信聊天记录分析工具</h1>
+            <p>智能分析微信聊天记录，生成专业分析报告</p>
+        </div>
+
+        <form id="analyzeForm">
+            <div class="form-group">
+                <label for="dataPath">微信数据路径：</label>
+                <input type="text" id="dataPath" name="dataPath" 
+                       placeholder="请输入微信数据文件路径，例如：D:\WeChat Files\wxid_xxx\Msg\0.db" required>
+            </div>
+
+            <div class="form-group">
+                <label for="friendName">好友姓名：</label>
+                <input type="text" id="friendName" name="friendName" 
+                       placeholder="请输入要分析的好友姓名" required>
+            </div>
+
+            <div class="form-group">
+                <label for="apiKey">阿里云DashScope API Key：</label>
+                <input type="password" id="apiKey" name="apiKey" 
+                       placeholder="请输入您的阿里云DashScope API Key" required>
+                <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">
+                    💡 目前仅支持阿里云DashScope API，请确保API Key有效
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label for="model">模型名称：</label>
+                <input type="text" id="model" name="model" 
+                       placeholder="Moonshot-Kimi-K2-Instruct" 
+                       value="Moonshot-Kimi-K2-Instruct">
+                <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">
+                    💡 如果不填写，将自动使用默认模型：Moonshot-Kimi-K2-Instruct
+                </small>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                开始分析
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在分析微信聊天记录，请稍候...</p>
+        </div>
+
+        <div class="result" id="result"></div>
+
+        <div class="example">
+            <h3>📋 使用说明</h3>
+            <p><strong>微信数据路径：</strong>通常位于 <code>D:\WeChat Files\wxid_xxx\Msg\0.db</code></p>
+            <p><strong>好友姓名：</strong>输入要分析的好友的微信昵称或备注名</p>
+            <p><strong>API Key：</strong>需要有效的阿里云DashScope API Key，目前仅支持阿里云DashScope服务</p>
+            <p><strong>模型名称：</strong>默认使用 <code>Moonshot-Kimi-K2-Instruct</code>，您也可以选择其他支持的模型</p>
+            <p><strong>注意事项：</strong>请确保微信数据文件存在且有读取权限，API Key有效且有足够余额</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('analyzeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const dataPath = document.getElementById('dataPath').value;
+            const friendName = document.getElementById('friendName').value;
+            const apiKey = document.getElementById('apiKey').value;
+            const model = document.getElementById('model').value || 'Moonshot-Kimi-K2-Instruct';
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            // 显示加载状态
+            submitBtn.disabled = true;
+            submitBtn.textContent = '分析中...';
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            
+            try {
+                const response = await fetch(`/analyze/chat?dataPath=${encodeURIComponent(dataPath)}&friendName=${encodeURIComponent(friendName)}&apiKey=${encodeURIComponent(apiKey)}&model=${encodeURIComponent(model)}`);
+                
+                if (response.ok) {
+                    const data = await response.text();
+                    result.innerHTML = `
+                        <h3>✅ 分析完成</h3>
+                        <div style="white-space: pre-wrap; margin-top: 15px; line-height: 1.6;">${data}</div>
+                    `;
+                    result.className = 'result success';
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <h3>❌ 分析失败</h3>
+                    <p>错误信息：${error.message}</p>
+                    <p>请检查：</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>数据路径是否正确</li>
+                        <li>好友姓名是否存在</li>
+                        <li>文件是否有读取权限</li>
+                    </ul>
+                `;
+                result.className = 'result error';
+            } finally {
+                // 恢复按钮状态
+                submitBtn.disabled = false;
+                submitBtn.textContent = '开始分析';
+                loading.style.display = 'none';
+                result.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html> 
